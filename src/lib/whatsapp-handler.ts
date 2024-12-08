@@ -18,17 +18,17 @@ class WhatsAppHandler {
     this.db = connection
   }
   async processIncomingMessage(phoneNumber: string, message: string) {
-    // Choose strategy based on message content
+
     const processingStrategy =
       message.toLowerCase().includes("contract") ||
       message.toLowerCase().includes("status")
         ? new ContractResponseStrategy()
         : new GenericMessageStrategy();
 
-    // Process the message
+
     const processedMessage = await processingStrategy.processMessage(message);
 
-    // Explicitly save incoming and outgoing messages
+    // saving incoming and outgoing messages
     const incomingMessage = new Message({
       phoneNumber,
       content: message,
@@ -46,10 +46,10 @@ class WhatsAppHandler {
       type: "outgoing",
     });
 
-    // Save messages
+
     await Promise.all([incomingMessage.save(), outgoingMessage.save()]);
 
-    // Return the processing result and saved messages
+
     return {
       processedMessage,
       incomingMessage,
