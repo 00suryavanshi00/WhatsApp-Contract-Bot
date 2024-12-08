@@ -29,7 +29,6 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
   }
 
   async processMessage(
-    phoneNumber: string,
     message: string
   ): Promise<{
     reply: string;
@@ -80,7 +79,7 @@ export class GenericMessageStrategy implements MessageProcessingStrategy {
     return keywords;
   }
 
-  async processMessage(phoneNumber: string, message: string) {
+  async processMessage(message: string) {
     const extractedKeywords = this.extractKeywords(message);
 
     return {

@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-class Database{
+export default class Database{
     private static instance: Database
     private static connection: mongoose.Connection | null = null
 
@@ -19,7 +19,9 @@ class Database{
     async connect(): Promise<mongoose.Connection>{
         if (!Database.connection){
             try{
+                console.log('this is the uri',process.env.MONGODB_URI)
                 const connect = await mongoose.connect(process.env.MONGODB_URI || '')
+
                 Database.connection = connect.connection;
                 console.log("DB successfully connected")
                 return Database.connection
