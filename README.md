@@ -1,6 +1,5 @@
-## Whatsapp-Contract-Bot
-# Ideation
-
+# Whatsapp-Contract-Bot
+## Ideation
 The idea is to implement not just a shabby looking code but a code which follows best practices from react and coding in general. So let's do this by thinking of the design patterns that can be implemented here.
 
 1) Database Connection - Single Pattern ( To ensure only single connetion, global access )
