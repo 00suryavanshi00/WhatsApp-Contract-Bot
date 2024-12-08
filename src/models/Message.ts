@@ -21,7 +21,11 @@ const MessageSchema = new mongoose.Schema<MessageInterface>({
         keywords: [String],
         contractId : String
     },
-    type: String,
+    type: {
+        type: String,
+        enum: ['incoming', 'outgoing'],
+        required: true
+    },
     createdAt: {type: Date, default: Date.now},
 })
 
