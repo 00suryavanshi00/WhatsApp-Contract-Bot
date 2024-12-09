@@ -1,11 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FaFileContract,
   FaCalendarDay,
   FaCalendarAlt,
-  FaChartLine,
+
 } from "react-icons/fa";
 import { MdAssignment, MdDateRange } from "react-icons/md";
 import {
@@ -86,7 +85,7 @@ export default function EnhancedContractsPage() {
                 {contract.status}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+            <div className="grid md:grid-cols-2 gap-2 text-sm text-gray-700">
               <div>
                 <span className="font-medium">Amount:</span>
                 <span className="ml-2 text-green-600">
