@@ -5,28 +5,31 @@ import {
 } from "@/services/message/strategy/message-processing-strategy";
 import Database from "./db";
 import mongoose from "mongoose";
+import ContractService from "@/services/contract/contract-service";
 
 class WhatsAppHandler {
   private db: mongoose.Connection | null;
+  private contractService: ContractService
 
-  constructor() {
+  constructor(contractService: ContractService) {
     const connection = Database.getInstance().getConnection();
     if (!connection) {
       throw new Error("Database connection is not initialized.");
     }
 
     this.db = connection
+    this.contractService = contractService;
   }
   async processIncomingMessage(phoneNumber: string, message: string) {
 
     const processingStrategy =
       message.toLowerCase().includes("contract") ||
       message.toLowerCase().includes("status")
-        ? new ContractResponseStrategy()
+        ? new ContractResponseStrategy(this.contractService)
         : new GenericMessageStrategy();
 
 
-    const processedMessage = await processingStrategy.processMessage(message);
+    const processedMessage = await processingStrategy.processMessage(phoneNumber, message);
 
     // saving incoming and outgoing messages
     const incomingMessage = new Message({
@@ -45,6 +48,9 @@ class WhatsAppHandler {
       content: processedMessage.reply,
       type: "outgoing",
     });
+
+
+    // create contact 
 
 
     await Promise.all([incomingMessage.save(), outgoingMessage.save()]);

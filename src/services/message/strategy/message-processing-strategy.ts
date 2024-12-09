@@ -1,3 +1,7 @@
+import { ContractInterface } from "@/models/Contract";
+import { ContractGenerationStrategyManager } from "@/services/contract/contract-manager";
+import ContractService from "@/services/contract/contract-service";
+
 export interface MessageProcessingStrategy {
   extractKeywords(message: string): string[];
 
@@ -8,10 +12,17 @@ export interface MessageProcessingStrategy {
     reply: string;
     actionType?: string;
     extractedKeywords?: string[];
+    contract?: ContractInterface
   }>;
 }
 
 export class ContractResponseStrategy implements MessageProcessingStrategy {
+  private contractGenerationManager: ContractGenerationStrategyManager;
+
+  constructor(contractService: ContractService){
+    this.contractGenerationManager = new ContractGenerationStrategyManager(contractService)
+  }
+
   extractKeywords(message: string): string[] {
     const keywords: string[] = [];
 
@@ -24,25 +35,50 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
       keywords.push("status_check");
     }
 
-    return keywords;
+    // // Look for potential client name and contract amount
+    // const clientNameMatch = message.match(/client\s+name:\s*(\w+)/i);
+    // const contractAmountMatch = message.match(/contract\s+amount:\s*(\d+)/i);
 
+    // if (clientNameMatch) {
+    //   keywords.push("client_name");
+    // }
+
+    // if (contractAmountMatch) {
+    //   keywords.push("contract_amount");
+    // }
+
+    return keywords;
   }
 
-  async processMessage(
-    message: string
-  ): Promise<{
+  async processMessage(phoneNumber:string ,message: string): Promise<{
     reply: string;
     actionType?: string;
     extractedKeywords?: string[];
+    contract?: ContractInterface
   }> {
     const extractedKeywords = this.extractKeywords(message);
 
     if (extractedKeywords.includes("contract_generation")) {
-      return {
-        reply: "Contract creation initiated. Please provide details.",
-        actionType: "contract_generation",
-        extractedKeywords,
-      };
+
+
+      const contractCreation = await this.contractGenerationManager.createContract(phoneNumber, message);
+
+      if ( contractCreation.success){
+        return {
+          reply: `Contract created successfully for ${contractCreation.contract?.clientName}. Status: ${contractCreation.contract?.status}`,
+          actionType: "contract_generation",
+          extractedKeywords,
+          contract: contractCreation.contract
+        };
+      }
+
+      else{
+        return{
+          reply: contractCreation.error || "Unable to create contract. Please provide complete details like this 'Generate contract. Client name: John Doe. Contract amount: 5000'",
+          actionType: "contract_generation_error",
+          extractedKeywords
+        }
+      }
     }
 
     if (extractedKeywords.includes("status_check")) {
@@ -61,12 +97,10 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
   }
 }
 
-
 // this is for the remaning generic messages something like help / info etc
 
 export class GenericMessageStrategy implements MessageProcessingStrategy {
   extractKeywords(message: string): string[] {
-
     const keywords: string[] = [];
 
     const commonKeywords = ["help", "info", "support", "query"];
