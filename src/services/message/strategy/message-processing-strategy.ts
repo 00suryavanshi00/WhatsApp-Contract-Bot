@@ -18,15 +18,17 @@ export interface MessageProcessingStrategy {
 
 export class ContractResponseStrategy implements MessageProcessingStrategy {
   private contractGenerationManager: ContractGenerationStrategyManager;
+  private contractService: ContractService;
 
-  constructor(contractService: ContractService){
-    this.contractGenerationManager = new ContractGenerationStrategyManager(contractService)
+  constructor(contractService: ContractService) {
+    this.contractService = contractService;
+    this.contractGenerationManager = new ContractGenerationStrategyManager(contractService);
   }
 
   extractKeywords(message: string): string[] {
     const keywords: string[] = [];
 
-    // these can be further divided into their own strategies
+    // Existing keyword extraction
     if (message.toLowerCase().includes("generate contract")) {
       keywords.push("contract_generation");
     }
@@ -35,22 +37,10 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
       keywords.push("status_check");
     }
 
-    // // Look for potential client name and contract amount
-    // const clientNameMatch = message.match(/client\s+name:\s*(\w+)/i);
-    // const contractAmountMatch = message.match(/contract\s+amount:\s*(\d+)/i);
-
-    // if (clientNameMatch) {
-    //   keywords.push("client_name");
-    // }
-
-    // if (contractAmountMatch) {
-    //   keywords.push("contract_amount");
-    // }
-
     return keywords;
   }
 
-  async processMessage(phoneNumber:string ,message: string): Promise<{
+  async processMessage(phoneNumber: string, message: string): Promise<{
     reply: string;
     actionType?: string;
     extractedKeywords?: string[];
@@ -58,37 +48,71 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
   }> {
     const extractedKeywords = this.extractKeywords(message);
 
+    // Contract Generation Logic
     if (extractedKeywords.includes("contract_generation")) {
-
-
       const contractCreation = await this.contractGenerationManager.createContract(phoneNumber, message);
 
-      if ( contractCreation.success){
+      if (contractCreation.success) {
         return {
           reply: `Contract created successfully for ${contractCreation.contract?.clientName}. Status: ${contractCreation.contract?.status}`,
           actionType: "contract_generation",
           extractedKeywords,
           contract: contractCreation.contract
         };
-      }
-
-      else{
-        return{
+      } else {
+        return {
           reply: contractCreation.error || "Unable to create contract. Please provide complete details like this 'Generate contract. Client name: John Doe. Contract amount: 5000'",
           actionType: "contract_generation_error",
           extractedKeywords
-        }
+        };
       }
     }
 
     if (extractedKeywords.includes("status_check")) {
-      return {
-        reply: "Please provide the specific contract you want to check.",
-        actionType: "status_check",
-        extractedKeywords,
-      };
+      try {
+
+        const contracts = await this.contractService.getContractsByPhoneNumber(phoneNumber);
+        console.log(contracts)
+        
+        if (contracts.length === 0) {
+          return {
+            reply: "No contracts found for this phone number.",
+            actionType: "status_check_no_contracts",
+            extractedKeywords
+          };
+        }
+
+        if (contracts.length === 1) {
+          const contract = contracts[0];
+          return {
+            reply: `Contract Status: ${contract.status}. Client: ${contract.clientName}. Amount: ${contract.amount}. Created On: ${contract.createdAt}`,
+            actionType: "status_check_single",
+            extractedKeywords,
+            contract
+          };
+        }
+
+        // for multiple
+        const contractSummary = contracts.map(
+          (contract, index) => 
+            `• Contract ${index + 1}:\n  Status: ${contract.status}\n  Client: ${contract.clientName}`
+        ).join('\n');
+        return {
+          reply: `Multiple contracts found:\n${contractSummary}\n`,
+          actionType: "status_check_multiple",
+          extractedKeywords
+        };
+
+      } catch (error) {
+        return {
+          reply: "Error retrieving contract status. Please try again later.",
+          actionType: "status_check_error",
+          extractedKeywords
+        };
+      }
     }
 
+    // Default response for unrecognized messages
     return {
       reply: "I couldn't understand your contract-related request.",
       actionType: "unknown",
@@ -97,8 +121,7 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
   }
 }
 
-// this is for the remaning generic messages something like help / info etc
-
+// Generic Message Strategy remains the same
 export class GenericMessageStrategy implements MessageProcessingStrategy {
   extractKeywords(message: string): string[] {
     const keywords: string[] = [];
@@ -113,7 +136,7 @@ export class GenericMessageStrategy implements MessageProcessingStrategy {
     return keywords;
   }
 
-  async processMessage(message: string) {
+  async processMessage(phoneNumber: string, message: string) {
     const extractedKeywords = this.extractKeywords(message);
 
     return {

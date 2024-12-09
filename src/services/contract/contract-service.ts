@@ -45,6 +45,17 @@ class ContractService {
   async getContracts(limit: number = 20): Promise<ContractInterface[]>{
     return await Contract.find().sort({createdAt: -1}).limit(limit)
   }
+
+  async getContractsByPhoneNumber(
+    phoneNumber: string, 
+    limit: number = 20
+  ): Promise<ContractInterface[]> {
+    return await Contract.find({ 
+      phoneNumber: phoneNumber 
+    }).sort({ 
+      createdAt: -1 
+    }).limit(limit);
+  }
 }
 
 export default ContractService;
