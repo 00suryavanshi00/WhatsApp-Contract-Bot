@@ -8,7 +8,7 @@ export default async function handler(
   req: NextApiRequest, 
   res: NextApiResponse
 ) {
-  // Ensure database connection
+
   await Database.getInstance().connect();
 
   const messageService = new MessageService();
@@ -17,13 +17,6 @@ export default async function handler(
 
   try {
     const messages = await messageService.getMessageLog();
-    // const contracts = await Promise.all(
-    //   messages
-    //     .filter(msg => msg.extractedData?.contractId)
-    //     .map(msg => 
-    //       ContractService.getLatestContract(msg.phoneNumber)
-    //     )
-    // );
 
     const contracts = await contractService.getContracts();
 

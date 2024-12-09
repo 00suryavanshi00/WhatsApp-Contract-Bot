@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export interface ContractInterface extends mongoose.Document{
     clientName: string;
-    amount: Number;
+    amount: number;
     status: 'draft' | 'in_progress' | 'completed' | 'cancelled';
     phoneNumber: string;
     createdAt: Date;
