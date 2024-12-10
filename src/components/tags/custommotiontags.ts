@@ -1,6 +1,7 @@
 import { HTMLMotionProps, motion } from "framer-motion";
 type ExtendedMotionDivProps = HTMLMotionProps<"div"> & {
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 };
 
 type ExtendedMotionH1Props = HTMLMotionProps<"h1"> & {

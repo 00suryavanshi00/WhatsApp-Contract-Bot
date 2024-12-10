@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { FaFileContract, FaChartLine, FaEnvelope } from "react-icons/fa";
 import { MdSend } from "react-icons/md";
 import { FaRegMessage } from "react-icons/fa6";
@@ -10,18 +9,49 @@ import {
   ExtendedMotionDiv,
   ExtendedMotionh1,
 } from "@/components/tags/custommotiontags";
-import { useFetchDashboard } from "@/hooks/useFetchDashboard";
 import Loader from "@/components/loader";
 import ErrorComponent from "@/components/error";
+import { MessageInterface } from "@/models/Message";
+import { Contract } from "@/interfaces/Contract";
+
+
+interface DashboardData {
+  messages: MessageInterface[];
+  contracts: Contract[];
+}
 
 export default function Dashboard() {
-  const { messages, contracts, loading, error } = useFetchDashboard();
   const router = useRouter();
 
-  const [selectedMessage, setSelectedMessage] = useState(null);
+
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const response = await fetch("/api/dashboard"); // Assuming this is your API endpoint
+        const data = await response.json();
+        setDashboardData(data);
+        setLoading(false);
+      } catch (error) {
+        setError(`Failed to load dashboard data ${error}`);
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  const [selectedMessage, setSelectedMessage] =
+    useState<MessageInterface | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const openModal = (message) => {
+  const openModal = (message: MessageInterface) => {
     setSelectedMessage(message);
     setIsModalOpen(true);
   };
@@ -51,7 +81,6 @@ export default function Dashboard() {
         </ExtendedMotionh1>
 
         <div className="grid md:grid-cols-2 gap-8">
-
           <ExtendedMotionDiv
             className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500"
             initial={{ opacity: 0, x: -50 }}
@@ -68,7 +97,7 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="space-y-4">
-              {messages.slice(0, 5).map((msg, index) => (
+              {dashboardData?.messages.slice(0, 5).map((msg, index) => (
                 <ExtendedMotionDiv
                   key={index}
                   className={`p-4 rounded-xl transition-all duration-300 
@@ -102,7 +131,6 @@ export default function Dashboard() {
             </div>
           </ExtendedMotionDiv>
 
-
           <ExtendedMotionDiv
             className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-purple-500"
             initial={{ opacity: 0, x: 50 }}
@@ -120,7 +148,7 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="space-y-4">
-              {contracts.slice(0, 5).map((contract, index) => (
+              {dashboardData?.contracts.slice(0, 5).map((contract, index) => (
                 <ExtendedMotionDiv
                   key={index}
                   className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300"
@@ -156,53 +184,51 @@ export default function Dashboard() {
         </div>
       </div>
 
-{/* model for showing extracted keywords */}
-{isModalOpen && selectedMessage && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 max-w-lg w-full shadow-lg relative animate-fadeIn">
-      <button
-        onClick={closeModal}
-        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          stroke="currentColor"
-          className="w-6 h-6">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
 
-      <h2 className="text-2xl font-extrabold text-gray-800 mb-6 text-center">
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-          Extracted Keywords
-        </span>
-      </h2>
-
-      <div className="bg-white rounded-xl shadow-inner p-4">
-        <ul className="list-disc pl-6 space-y-2">
-          {selectedMessage.extractedData.keywords.map((keyword, index) => (
-            <li key={index} className="text-gray-700 font-medium">
-              {keyword}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <button
-        onClick={closeModal}
-        className="mt-6 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition">
-        Close
-      </button>
-    </div>
-  </div>
-)}
-
+      {isModalOpen && selectedMessage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 max-w-lg w-full shadow-lg relative animate-fadeIn">
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-black hover:text-gray-200 transition">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="w-6 h-6">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">
+              Message Details
+            </h2>
+            <p className="font-semibold text-indigo-700">
+              {selectedMessage.phoneNumber}
+            </p>
+            <p className="text-gray-700 mt-2">{selectedMessage.content}</p>
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Extracted Data:
+              </h3>
+              <ul className="list-disc ml-6 mt-2">
+                {selectedMessage.extractedData.keywords.map(
+                  (keyword, index) => (
+                    <li key={index} className="text-sm text-gray-600">
+                      {keyword}
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
