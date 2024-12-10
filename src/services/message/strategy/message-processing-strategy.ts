@@ -136,7 +136,7 @@ export class ContractResponseStrategy implements MessageProcessingStrategy {
       };
     } catch (error) {
       return {
-        reply: "Error retrieving contract status. Please try again later.",
+        reply: `Error: ${error}`,
         actionType: ActionType.StatusCheckError,
         extractedKeywords
       };
