@@ -2,6 +2,7 @@ import { ContractInterface } from "@/models/Contract";
 import ContractService from "./contract-service";
 import {
   ContractGenerationStrategy,
+  DirectContractGenerationStrategy,
   StandardContractGenerationStrategy,
 } from "./strategy/contract-generation-strategy";
 
@@ -11,7 +12,8 @@ export class ContractGenerationStrategyManager {
 
   constructor(contractService?: ContractService) {
     this.strategies = [
-      new StandardContractGenerationStrategy(), // can add more strategies later here
+      new StandardContractGenerationStrategy(),
+      new DirectContractGenerationStrategy(), // can add more strategies later here
     ];
     this.contractService = contractService || new ContractService();
   }
@@ -23,7 +25,8 @@ export class ContractGenerationStrategyManager {
 
   async createContract(
     phoneNumber: string,
-    message: string
+    message: string,
+
   ): Promise<{
     success: boolean;
     contract?: ContractInterface;
@@ -44,20 +47,26 @@ export class ContractGenerationStrategyManager {
     if (!clientName || !contractAmount) {
       return {
         success: false,
-        error: "Incomplete contract information",
+        error: "Contract creation initiated. Please provide details.",
       };
     }
 
+    try {
+      const contract = await this.contractService.createContract(
+        phoneNumber,
+        clientName,
+        contractAmount
+      );
 
-    try{
-        const contract = await this.contractService.createContract(
-            phoneNumber, clientName, contractAmount
-        );
-
-        return {success: true, contract: contract}
-    }
-    catch(error){
-        return {success: false, error: error instanceof Error ? error.message : "Something went wrong buddy!"}
+      return { success: true, contract: contract };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong buddy!",
+      };
     }
   }
 }
